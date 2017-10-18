@@ -3,18 +3,23 @@ import Text.Parsec.String (Parser)
 
 
 expression :: Parser Float
-expression =
-  chainActions "+-" (chainActions "/*" number)
-
-
-number :: Parser Float
-number = fmap read $ withWhitespace numberString
+expression = chainActions "+-" (chainActions "/*" expressionOrNumber)
   where
-    numberString :: Parser String
-    numberString = many1 $ oneOf $ '.' : ['0' .. '9']
+    expressionOrNumber :: Parser Float
+    expressionOrNumber = withWhitespace $ withParens expression <|> number
 
     withWhitespace :: Parser a -> Parser a
     withWhitespace = between spaces spaces
+
+    withParens :: Parser a -> Parser a
+    withParens = between (char '(') (char ')')
+
+
+number :: Parser Float
+number = fmap read numberString
+  where
+    numberString :: Parser String
+    numberString = many1 $ oneOf $ '.' : ['0' .. '9']
 
 
 chainActions :: String -> Parser Float -> Parser Float
